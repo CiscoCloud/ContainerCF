@@ -4,20 +4,28 @@ ContainerCF
 Welcome to the home of Container.CF!
 We are a containerized CloudFoundry build, designed to bring the container and cloudfoundry ecosystems closer together.
 
-For background information and our reasons behind the project, please see this blog post: <blogs.cisco.com/cloud/containerized-cf>
+For background information and our reasons behind the project, please see this blog post: https://blogs.cisco.com/cloud/containerized-cf
 
-Or you can jump direct to the demo video: <https://youtu.be/X5Dv3SFBWrg>
+.. raw:: html
+
+   <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; height: auto;">
+       <iframe src="https://www.youtube.com/embed/X5Dv3SFBWrg" frameborder="0" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+   </div>
 
 Just seen the announcement? We'll be adding more information here over the next couple of days! Stay tuned and add that bookmark!
 
-Contents:
+Contents
+********
 
 .. toctree::
    :maxdepth: 2
+
    getting_started/index.rst
    known_issues.rst
    faq.rst
    license.rst
+
+* `Changelog <https://github.com/CiscoCloud/containercf/blob/master/CHANGELOG.md>`_
 
 .. only:: html
 
