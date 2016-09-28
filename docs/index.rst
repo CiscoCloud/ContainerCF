@@ -4,7 +4,7 @@ ContainerCF
 Welcome to the home of Container.CF!
 We are a containerized CloudFoundry build, designed to bring the container and cloudfoundry ecosystems closer together.
 
-For background information and our reasons behind the project, please see this blog post: https://blogs.cisco.com/cloud/containerized-cf
+For background information and our reasons behind the project, please see this blog post: http://blogs.cisco.com/cloud/containerized-cloud-foundry-is-key-element-for-cloud-native
 
 .. raw:: html
 
