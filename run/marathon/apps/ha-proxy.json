@@ -1,0 +1,59 @@
+{
+  "id": "ha-proxy",
+  "instances": 1,
+  "cpus": 0.1,
+  "mem": 256,
+  "disk": 1024,
+  "constraints": [
+    ["hostname", "CLUSTER", "HOST_IP_PLACEHOLDER"]
+  ],
+  "container": {
+    "type": "DOCKER",
+    "docker": {
+      "image": "shippedrepos-docker-sitd.bintray.io/sitd/ha-proxy",
+      "forcePullImage": true,
+      "privileged": true,
+      "network": "BRIDGE",
+      "parameters": [
+        { "key": "dns", "value": "127.0.0.1" },
+        { "key": "dns", "value": "DNS_PLACEHOLDER_IP" },
+        { "key": "net", "value": "cf" }
+      ],
+      "portMappings": [{
+        "containerPort": 80,
+        "hostPort": 80,
+        "servicePort": 0,
+        "protocol": "tcp"
+      }, {
+        "containerPort": 443,
+        "hostPort": 443,
+        "servicePort": 0,
+        "protocol": "tcp"
+      }]
+    },
+    "volumes": [{
+      "containerPath": "/lib/modules",
+      "hostPath": "/lib/modules",
+      "mode": "RO"
+    }]
+  },
+  "dependencies": ["/cf/jobs/router"],
+  "env": {
+    "CONFD_BACKEND": "consul",
+    "CONFD_NODE": "HOST_IP_PLACEHOLDER:8500"
+  },
+  "healthChecks": [{
+    "protocol": "COMMAND",
+    "command": {
+      "value": "! (/var/vcap/bosh/bin/monit summary | tail -n +3 | grep -v -E '(running|accessible)$')"
+    },
+    "gracePeriodSeconds": 300,
+    "timeoutSeconds": 5,
+    "intervalSeconds": 20,
+    "maxConsecutiveFailures": 5
+  }],
+  "ports": [80, 443],
+  "upgradeStrategy": {
+    "minimumHealthCapacity": 0
+  }
+}

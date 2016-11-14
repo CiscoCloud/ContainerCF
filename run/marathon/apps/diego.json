@@ -1,0 +1,50 @@
+{
+  "id": "diego",
+  "instances": "DIEGO_INSTANCE_COUNT_PLACEHOLDER",
+  "cpus": 1.0,
+  "mem": 1024,
+  "disk": 1024,
+  "container": {
+    "type": "DOCKER",
+    "docker": {
+      "image": "shippedrepos-docker-sitd.bintray.io/sitd/diego",
+      "forcePullImage": true,
+      "parameters": [
+        { "key": "dns", "value": "127.0.0.1" },
+        { "key": "dns", "value": "DNS_PLACEHOLDER_IP" },
+        { "key": "net", "value": "cf" }
+      ],
+      "privileged": true,
+      "network": "BRIDGE"
+    },
+    "volumes": [{
+      "containerPath": "/lib/modules",
+      "hostPath": "/lib/modules",
+      "mode": "RO"
+    }]
+  },
+  "dependencies": [
+    "/cf/jobs/api",
+    "/cf/jobs/diego-etcd",
+    "/cf/jobs/nats",
+    "/cf/jobs/consul",
+    "/cf/jobs/loggregator-trafficcontroller"
+  ],
+  "env": {
+    "CONFD_BACKEND": "consul",
+    "CONFD_NODE": "HOST_IP_PLACEHOLDER:8500"
+  },
+  "healthChecks": [{
+    "protocol": "COMMAND",
+    "command": {
+      "value": "! (/var/vcap/bosh/bin/monit summary | tail -n +3 | grep -v -E '(running|accessible)$')"
+    },
+    "gracePeriodSeconds": 300,
+    "timeoutSeconds": 5,
+    "intervalSeconds": 20,
+    "maxConsecutiveFailures": 5
+  }],
+  "upgradeStrategy": {
+    "minimumHealthCapacity": 0
+  }
+}

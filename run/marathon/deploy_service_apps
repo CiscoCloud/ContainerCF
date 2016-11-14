@@ -1,0 +1,8 @@
+#!/bin/bash
+
+output_file=./cf-services.json
+
+source ./cf_parameters
+./update_service_apps
+
+http post ${MARATHON_URL}/v2/groups ${CF_LOCAL_MARATHON_AUTH_TOKEN} < ${output_file}

@@ -1,0 +1,47 @@
+{
+  "id": "hm9000",
+  "instances": "HM9000_INSTANCE_COUNT_PLACEHOLDER",
+  "cpus": 0.1,
+  "mem": 1024,
+  "disk": 1024,
+  "container": {
+    "type": "DOCKER",
+    "docker": {
+      "image": "shippedrepos-docker-sitd.bintray.io/sitd/hm9000",
+      "forcePullImage": true,
+      "privileged": true,
+      "parameters": [
+        { "key": "net", "value": "cf" }
+      ],
+      "network": "BRIDGE"
+    },
+    "volumes": [{
+      "containerPath": "/lib/modules",
+      "hostPath": "/lib/modules",
+      "mode": "RO"
+    }]
+  },
+  "dependencies": [
+    "/cf/jobs/api",
+    "/cf/jobs/dea",
+    "/cf/jobs/nats",
+    "/cf/jobs/router"
+  ],
+  "env": {
+    "CONFD_BACKEND": "consul",
+    "CONFD_NODE": "HOST_IP_PLACEHOLDER:8500"
+  },
+  "healthChecks": [{
+    "protocol": "COMMAND",
+    "command": {
+      "value": "! (/var/vcap/bosh/bin/monit summary | tail -n +3 | grep -v -E '(running|accessible)$')"
+    },
+    "gracePeriodSeconds": 300,
+    "timeoutSeconds": 5,
+    "intervalSeconds": 20,
+    "maxConsecutiveFailures": 5
+  }],
+  "upgradeStrategy": {
+    "minimumHealthCapacity": 0
+  }
+}

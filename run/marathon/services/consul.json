@@ -1,0 +1,39 @@
+{
+  "args": [
+    "--bootstrap", "",
+    "--client", "0.0.0.0"
+  ],
+  "cpus": 0.1,
+  "mem": 256,
+  "id": "consul",
+  "instances": 1,
+  "ports": [8500, 8300, 8301],
+  "requirePorts": true,
+  "constraints": [["hostname", "CLUSTER", "HOST_IP_PLACEHOLDER"]],
+  "healthChecks": [
+    {
+      "path": "/v1/agent/self",
+      "portIndex": 0,
+      "protocol": "HTTP",
+      "gracePeriodSeconds": 10,
+      "intervalSeconds": 10,
+      "timeoutSeconds": 10,
+      "maxConsecutiveFailures": 3,
+      "ignoreHttp1xx": false
+    }
+  ],
+  "container": {
+    "type": "DOCKER",
+    "docker": {
+      "image": "gliderlabs/consul-server",
+      "forcePullImage": true,
+      "privileged": false,
+      "network": "BRIDGE",
+      "portMappings": [
+        { "containerPort": 8500, "hostPort": 8500, "servicePort": 8500, "protocol": "tcp" },
+        { "containerPort": 8300, "hostPort": 8300, "servicePort": 8300, "protocol": "tcp" },
+        { "containerPort": 8301, "hostPort": 8301, "servicePort": 8301, "protocol": "tcp" }
+      ]
+    }
+  }
+ }

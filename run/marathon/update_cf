@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+env=$1 
+scheduler=$2
+
+output_file=./environments/${env}/$env-cf.json
+
+source ./environments/${env}/cf_parameters
+./scripts/populate_kv_store $env
+
+jq '{id: "cf", groups: [{id: "/cf/jobs", apps: .}]}' --slurp apps/jobs/${scheduler}/*.json > ${output_file}
+
+if [[ $DIEGO_ENABLED == "true" ]]; then
+  DIEGO_INSTANCE_COUNT=1
+  DIEGO_CELL_INSTANCE_COUNT=$RUNNER_INSTANCE_COUNT
+  DEA_INSTANCE_COUNT=0
+  HM9000_INSTANCE_COUNT=0
+else
+  DIEGO_INSTANCE_COUNT=0
+  DIEGO_CELL_INSTANCE_COUNT=0
+  DEA_INSTANCE_COUNT=$RUNNER_INSTANCE_COUNT
+  HM9000_INSTANCE_COUNT=1
+fi
+
+sed -i "s/\"DIEGO_INSTANCE_COUNT_PLACEHOLDER\"/$DIEGO_INSTANCE_COUNT/" ${output_file}
+sed -i "s/\"DIEGO_CELL_INSTANCE_COUNT_PLACEHOLDER\"/$DIEGO_CELL_INSTANCE_COUNT/" ${output_file}
+sed -i "s/\"HM9000_INSTANCE_COUNT_PLACEHOLDER\"/$HM9000_INSTANCE_COUNT/" ${output_file}
+sed -i "s/\"DEA_INSTANCE_COUNT_PLACEHOLDER\"/$DEA_INSTANCE_COUNT/" ${output_file}
+sed -i "s/DNS_PLACEHOLDER_IP/$DNS_IP/" ${output_file}
+sed -i "s/HOST_IP_PLACEHOLDER/$HOST_IP/" ${output_file}
