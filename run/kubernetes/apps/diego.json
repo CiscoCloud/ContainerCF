@@ -1,0 +1,47 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: ccf-diego
+    version: latest
+  name: ccf-diego
+  namespace: ccf
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ccf-diego
+      version: latest
+  template:
+    metadata:
+      labels:
+        app: ccf-diego
+        version: latest
+    spec:
+      containers:
+      - env:
+        - name: CONFD_NODE
+          value: ccf_consul_srv.ccf:8500
+        - name: CONFD_BACKEND
+          value: consul
+        image: shippedrepos-docker-sitd.bintray.io/sitd/diego
+        name: diego
+        livenessProbe:
+          exec:
+            command: ["/bin/sh", "-c", "!(/var/vcap/bosh/bin/monit summary | tail -n +3 | grep -v -E '(running|accessible)$' )"]
+          initialDelaySeconds: 20
+          timeoutSeconds: 10
+        resources:
+          limits:
+            cpu: 1.0
+            memory: 1024Mi
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /lib/modules
+          name: lib-modules
+          readOnly: true
+      volumes:
+      - hostPath:
+          path: /lib/modules
+        name: lib-modules

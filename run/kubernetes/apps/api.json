@@ -1,0 +1,47 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: ccf-api
+    version: latest
+  name: ccf-api
+  namespace: ccf
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ccf-api
+      version: latest
+  template:
+    metadata:
+      labels:
+        app: ccf-api
+        version: latest
+    spec:
+      containers:
+      - env:
+        - name: CONFD_BACKEND
+          value: consul
+        - name: CONFD_NODE
+          value: ccf_consul_srv.ccf:8500
+        image: shippedrepos-docker-sitd.bintray.io/sitd/api
+        name: api
+        livenessProbe:
+          exec:
+            command: ["/bin/sh", "-c", "!(/var/vcap/bosh/bin/monit summary | tail -n +3 | grep -v -E '(running|accessible)$' )"]
+          initialDelaySeconds: 20
+          timeoutSeconds: 10
+        resources:
+          limits:
+            cpu: 1.0
+            memory: 4096Mi
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /lib/modules
+          name: lib-modules
+          readOnly: true
+      volumes:
+      - hostPath:
+          path: /lib/modules
+        name: lib-modules

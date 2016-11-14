@@ -1,0 +1,43 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: ccf-consul
+    version: latest
+    type: ccf-consul
+  name: ccf-consul
+  namespace: ccf
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ccf-consul
+      version: latest
+  template:
+    metadata:
+      labels:
+        app: ccf-consul
+        type: ccf-consul
+        version: latest
+    spec:
+      containers:
+      - args:
+        - --bootstrap
+        - --client
+        - 0.0.0.0
+        image: gliderlabs/consul-server
+        name: ccf-consul
+        ports:
+        - containerPort: 8500
+          hostPort: 8500
+          protocol: TCP
+        - containerPort: 8300
+          hostPort: 8300
+          protocol: TCP
+        - containerPort: 8301
+          hostPort: 8301
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 100.0m
+            memory: 256Mi
