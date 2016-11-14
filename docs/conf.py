@@ -49,7 +49,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'ContainerCF'
-copyright = u'2016, Matt Johnson @mattdashj'
+copyright = u'2016, Matt Johnson @mattdashj / @containercf' 
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
