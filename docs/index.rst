@@ -10,16 +10,27 @@ http://blogs.cisco.com/cloud/containerized-cloud-foundry-is-key-element-for-clou
 
 For a quick demo on Marathon, see the video below.
 
-Contents
-********
+Project Info and Run ContainerCF
+********************************
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    getting_started/index.rst
    known_issues.rst
    faq.rst
    license.rst
+
+Develop ContainerCF and Pipeline
+********************************
+.. toctree::
+   :maxdepth: 3
+
+
+   development/index.rst
+   development/dev-env.rst
+
+
 
 * `Changelog <https://github.com/CiscoCloud/containercf/blob/master/CHANGELOG.md>`_
 
