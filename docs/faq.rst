@@ -12,13 +12,9 @@ For a full writeup of our reasoning, see `this blog post. <https://blogs.cisco.c
 
 Where is the Code?
 ------------------
-
-Over the next few days, we'll be adding to the documentation as we
-get everything out in the open. Firstly the consumable public docker repo
-with pre-built containerCF images, followed by the pipeline code and known-issues.
-
-We are an extremely small team with day jobs, so please bear with us. We'd rather have useful docs
-ready for each piece to prevent much head-scratching.
+UPDATE!
+Everything we have is now in this repo, including docs and a writeup of the pipeline.
+See the new sections of http://container.cf for details.
 
 Is this ready for production?
 -----------------------------
@@ -29,5 +25,7 @@ in order to make it useable/upgradeable into the future.
 It *should* be considered a preview release.
 
 It works, recovers, converges and we can't wait to see where the community takes it;
-BUT, there are some known issues we'll be documenting on the 'Known Issues' page which you should
-consider and test before jumping in with any high-value workload.
+We've documented a couple of issues on the 'Known Issues' page which you should
+consider and test before jumping in with any valued workloads.
+
+Also, for versioning, please see the CF version note at the bottom of the development page.
