@@ -69,6 +69,16 @@ Develop:
 ```bosh_concourse_deployment0.yml``` - Our BOSH manifest for the concourse environment (AWS).
 
 
+Credits
+*******
+A Huge amount of credit goes to Gareth and Claudia (Github: @spikymonky and @callisto13) for their time, effort and awesomeness on this project and Colin Humphreys (@hatofmonkeys) for his guidance.
+You'll find all these lovely people working over at Pivotal LDN nowadays.
+
+The work also stood heavily the shoulders of Tommy Hughes' work on 'Running a PaaS in Docker' (https://www.ctl.io/developers/blog/post/running-a-paas-in-docker/).
+This single-container CF in Docker implementation, provided our starting point and validated the base for what we wanted to acheive.
+
+Finally, special hanks to Cisco for sponsoring the initial PoC and Development of ContainerCF.
+
 Search
 ******
 
