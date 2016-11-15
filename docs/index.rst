@@ -49,10 +49,12 @@ Demo Video (Marathon)
 Repository Layout
 *****************
 Consume:
+-------
 
 ```run``` - Scripts and Manifests to deploy current ContainerCF images.
 
 Develop:
+--------
 
 ```concourse``` - Concourse CI pipeline Configuration and Parameters.
 
@@ -60,11 +62,11 @@ Develop:
 
 ```environments``` - Configuration for mesos clusters used during pipeline and testing.
 
-```scripts``` - Used by pipeline/concourse to push newly generated images to ```environments```
+```scripts``` - Used by pipeline/concourse to push newly generated images to environments.
 
-```cats``` - Configuration and scripts for running the CF CATS test against ```environments```
+```cats``` - Configuration and scripts for running the CF CATS test against environments.
 
-```bosh_concourse_deployment0.yml``` - Our BOSH manifest for standing up our concourse environment (AWS).
+```bosh_concourse_deployment0.yml``` - Our BOSH manifest for the concourse environment (AWS).
 
 
 Search
