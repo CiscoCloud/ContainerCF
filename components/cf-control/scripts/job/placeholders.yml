@@ -1,0 +1,15 @@
+placeholder-f622194a.example.com: {{getv "/cf/domain"}}
+ADMIN-PASSWORD-PLACEHOLDER-f622194a: {{getv "/cf/admin_password"}}
+ADMIN-USER-PLACEHOLDER-f622194a: {{getv "/cf/admin_user"}}
+CONSUL-IP-PLACEHOLDER-f622194a: {{getv "/cf/jobs/consul/container_ip"}}
+DIEGO_ENABLED_PLACEHOLDER_f622194a: {{getv "/cf/jobs/diego/enabled"}}
+ETCD-IP-PLACEHOLDER-f622194a: {{getv "/cf/jobs/etcd/container_ip"}}
+LOGGREGATOR-IP-PLACEHOLDER-f622194a: {{getv "/cf/jobs/loggregator/container_ip"}}
+NATS-IP-PLACEHOLDER-f622194a: {{getv "/cf/jobs/nats/container_ip"}}
+POSTGRES-IP-PLACEHOLDER-f622194a: {{getv "/cf/jobs/postgres/container_ip"}}
+ROUTER-IP-PLACEHOLDER-f622194a: {{getv "/cf/jobs/router/container_ip"}}
+SSL-PEM-PLACEHOLDER-f622194a: {{getv "/cf/ssl_pem"}}
+SUPPORT-ADDRESS-PLACEHOLDER-f622194a: {{getv "/cf/support_address"}}
+SYSLOG-DRAIN-ADDRESS-PLACEHOLDER-f622194a: {{getv "/cf/syslog_drain/address"}}
+SYSLOG-DRAIN-PORT-PLACEHOLDER-f622194a: {{getv "/cf/syslog_drain/port"}}
+SYSLOG-DRAIN-TRANSPORT-PLACEHOLDER-f622194a: getv "/cf/syslog_drain/transport"

@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+wget -O cf-cli.deb 'https://cli.run.pivotal.io/stable?release=debian64&version=6.19.0&source=github-rel'
+dpkg -i cf-cli.deb
+
+export CONFIG=$PWD/cats/$CATS_ENV/integration_config.json
+export GO15VENDOREXPERIMENT=1
+
+cd /root/go/src/github.com/cloudfoundry/cf-acceptance-tests
+
+./bin/test_default --failFast --v --progress

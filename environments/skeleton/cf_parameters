@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+
+# IP address of your main slave node. This node will
+# end up running HA-proxy, Etcd and Consul.
+HOST_IP=
+# FQDN of the main slave node
+HOST_URL=
+# IP address of your DNS server.
+DNS_IP=
+# Number of slave nodes in your Mesos cluster.
+MESOS_SLAVE_COUNT=
+# Enable or disable Diego backend
+# Default: false
+DIEGO_ENABLED=
+# Number of DEAs for your Cloud Foundry. These are the jobs that run your apps,
+# so more DEAs == more app capacity. Each one uses 4Gb RAM by default.
+DEA_INSTANCE_COUNT=
+# Username of the Cloud Foundry admin user.
+# Default: admin
+CF_ADMIN_USER=
+# Password of the Cloud Foundry admin user
+# Default: c1oudc0w
+CF_ADMIN_PASSWORD=
+# Domain for your Cloud Foundry and apps. You may find
+# xip.io useful if you don't have your own domain name,
+# e.g. 192.168.0.1.xip.io
+CF_DOMAIN=
+# Email address to contact for support for your Cloud Foundry
+CF_SUPPORT_ADDRESS=
+# URL or IP of an external syslog drain for your Cloud Foundry
+CF_SYSLOG_DRAIN_ADDRESS=
+# Port of your external syslog drain
+CF_SYSLOG_DRAIN_PORT=
+# Transport for your external syslog drain. Can be tcp, udp or relp
+CF_SYSLOG_DRAIN_TRANSPORT=
+
+
+
+
+declare -A kv_array
+kv_array=(
+  ["/cf/admin_password"]="${CF_ADMIN_PASSWORD:-c1oudc0w}"
+  ["/cf/admin_user"]="${CF_ADMIN_USER:-admin}"
+  ["/cf/domain"]="${CF_DOMAIN}"
+  ["/cf/jobs/diego/enabled"]="${DIEGO_ENABLED:-false}"
+  ["/cf/support_address"]="${CF_SUPPORT_ADDRESS}"
+  ["/cf/ssl_pem"]="$(cat ./environments/${env}/ssl.pem)"
+  ["/cf/syslog_drain/address"]="${CF_SYSLOG_DRAIN_ADDRESS}"
+  ["/cf/syslog_drain/port"]="${CF_SYSLOG_DRAIN_PORT}"
+  ["/cf/syslog_drain/transport"]="${CF_SYSLOG_DRAIN_TRANSPORT}"
+)

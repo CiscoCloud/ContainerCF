@@ -1,0 +1,12 @@
+{
+  "api": "api.cloudfoundry.stable.local",
+  "admin_user": "admin",
+  "admin_password": "c1oudc0w",
+  "apps_domain": "apps.cloudfoundry.stable.local",
+  "backend": "diego",
+  "system_domain": "cloudfoundry.stable.local",
+  "skip_ssl_validation": true,
+  "use_http": true,
+  "syslog_ip_address": "1.2.3.4",
+  "syslog_drain_port": 1234
+}

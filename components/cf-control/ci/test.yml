@@ -1,0 +1,7 @@
+platform: linux
+image: docker:///cloudcredo/sitd-concourse-job
+inputs:
+- name: cf-control-git
+  path: .
+run:
+  path: components/cf-control/tests/test.pl

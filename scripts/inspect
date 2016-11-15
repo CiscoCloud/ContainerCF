@@ -1,0 +1,32 @@
+#!/bin/sh
+
+component=$1
+arg=$2
+container_id=$(docker ps | awk -v component=${component} '{if (match($2, "sitd/" component "$")) {print $1}}')
+
+case $arg in
+  monit)
+    command='/var/vcap/bosh/bin/monit summary'
+    ;;
+  *)
+    command=bash
+    ;;
+esac
+
+case $(echo $container_id | wc -w) in
+  0)
+    echo "${component} is not here. Check other nodes."
+    ;;
+  1)
+    docker exec -it ${container_id} ${command}
+    ;;
+  *)
+    echo "Multiple containers found, pick one:"
+    echo
+    docker ps --format "table {{.ID}}\t{{.Image}}\t{{.RunningFor}}\t{{.Names}}" | grep "CONTAINER ID\|$component "
+    echo
+    read -p "id: " container_id
+    docker exec -it ${container_id} ${command}
+    ;;
+esac
+

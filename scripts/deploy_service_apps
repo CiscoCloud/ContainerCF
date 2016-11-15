@@ -1,0 +1,9 @@
+#!/bin/bash
+
+env=$1
+output_file=./environments/${env}/${env}-services.json
+
+source ./environments/${env}/cf_parameters
+./scripts/update_service_apps ${env}
+
+http post http://$HOST_IP:8080/v2/groups < ${output_file}

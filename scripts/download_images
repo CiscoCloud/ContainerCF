@@ -1,0 +1,54 @@
+#!/bin/bash
+
+images=(
+  shippedrepos-docker-sitd.bintray.io/sitd/api
+  shippedrepos-docker-sitd.bintray.io/sitd/clock
+  shippedrepos-docker-sitd.bintray.io/sitd/consul
+  shippedrepos-docker-sitd.bintray.io/sitd/dea
+  shippedrepos-docker-sitd.bintray.io/sitd/diego
+  shippedrepos-docker-sitd.bintray.io/sitd/diego-cell
+  shippedrepos-docker-sitd.bintray.io/sitd/etcd
+  shippedrepos-docker-sitd.bintray.io/sitd/ha-proxy
+  shippedrepos-docker-sitd.bintray.io/sitd/hm9000
+  shippedrepos-docker-sitd.bintray.io/sitd/loggregator
+  shippedrepos-docker-sitd.bintray.io/sitd/loggregator-trafficcontroller
+  shippedrepos-docker-sitd.bintray.io/sitd/nats
+  shippedrepos-docker-sitd.bintray.io/sitd/postgres
+  shippedrepos-docker-sitd.bintray.io/sitd/router
+  shippedrepos-docker-sitd.bintray.io/sitd/uaa
+)
+
+sp='/-\|'
+sc=0
+spin() {
+  printf "\b${sp:sc++:1}"
+  ((sc==${#sp})) && sc=0
+}
+
+endspin() {
+  printf "\r%s\n" "$@"
+}
+
+waitall() {
+  while :; do
+    sleep 0.5; spin
+    for pid in "$@"; do
+      shift
+      if kill -0 "$pid" 2>/dev/null; then
+        set -- "$@" "$pid"
+      fi
+    done
+    (("$#" > 0)) || break
+  done
+  endspin
+}
+
+echo -n "Downloading Cloud Foundry images...  "
+pids=""
+for image in ${images[@]}; do
+  docker pull $image 1>&- &
+  pids="$pids $!"
+done
+waitall $pids
+
+echo "Images downloaded! Yay! :)"

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+env=$1
+output_file=./environments/${env}/${env}-cf.json
+
+source ./environments/${env}/cf_parameters
+./scripts/update_cf ${env}
+
+http post http://${HOST_IP}:8080/v2/groups < ${output_file}

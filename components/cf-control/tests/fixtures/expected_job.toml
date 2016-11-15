@@ -1,0 +1,6 @@
+[template]
+src = "data_jobs_tests_template_me_please.tmpl"
+dest = "/var/vcap/data/jobs/tests/template_me_please"
+gid = 1000
+keys = [ "/cf/admin_password", "/cf/admin_user", "/cf/domain", "/cf/jobs/diego/enabled", "/cf/jobs/etcd/container_ip", "/cf/jobs/loggregator/container_ip", "/cf/jobs/nats/container_ip", "/cf/jobs/postgres/container_ip", "/cf/jobs/router/container_ip", "/cf/ssl_pem", "/cf/support_address", "/cf/syslog_drain/address", "/cf/syslog_drain/port", "/cf/syslog_drain/transport" ]
+reload_cmd = "until /var/vcap/bosh/bin/monit restart tests; do echo 'Waiting to restart tests...'; sleep 2; done"

@@ -1,0 +1,1233 @@
+---
+jobs:
+- name: sitd-concourse-job
+  serial: true
+  plan:
+  - get: sitd-concourse-job
+    trigger: true
+  - put: sitd-concourse-job-image
+    params:
+      cache: false
+      build: sitd-concourse-job/concourse/sitd-concourse-job
+    get_params:
+      skip_download: true
+
+- name: cf-base
+  serial: true
+  plan:
+  - get: cf-base-git
+    trigger: true
+  - put: cf-base-image
+    params:
+      cache: false
+      build: cf-base-git/components/cf-base
+    get_params:
+      skip_download: true
+      save: true
+
+- name: cf-release
+  serial: true
+  plan:
+  - aggregate:
+    - get: cf-base-image
+      trigger: true
+      params:
+         save: true
+         skip_download: false
+      passed: [cf-base]
+    - get: cf-release-git
+      trigger: true
+  - task: debug-ls
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source: {repository: busybox}
+      inputs:
+      - name: cf-base-image
+      run:
+        path: ls
+        args: ['-la', 'cf-base-image']
+
+
+  - put: cf-release-image
+    params:
+      load_base: cf-base-image
+      cache: false
+      build: cf-release-git/components/cf-release
+    get_params:
+      skip_download: false
+
+- name: cf-manifest
+  serial: true
+  plan:
+  - aggregate:
+    - get: cf-release-image
+      params:
+         save: true
+         skip_download: false
+      trigger: true
+      passed: [cf-release]
+    - get: cf-manifest-git
+      trigger: true
+  - put: cf-manifest-image
+    params:
+      cache: false
+      build: cf-manifest-git/components/cf-manifest
+      load_base: cf-release-image
+    get_params:
+      skip_download: true
+
+- name: cf-control
+  serial: true
+  plan:
+  - aggregate:
+    - get: cf-manifest-image
+      trigger: true
+      passed: [cf-manifest]
+      params:
+         save: true
+         skip_download: false
+    - get: cf-control-git
+      trigger: true
+  - task: test-templating
+    file: cf-control-git/components/cf-control/ci/test.yml
+  - put: cf-control-image
+    params:
+      cache: false
+      build: cf-control-git/components/cf-control
+      load_base: cf-manifest-image
+    get_params:
+      skip_download: true
+
+- name: diego-releases
+  serial: true
+  plan:
+  - aggregate:
+    - get: cf-control-image
+      trigger: true
+      params:
+         save: true
+         skip_download: false
+      passed: [cf-control]
+    - get: diego-releases-git
+      trigger: true
+  - put: diego-releases-image
+    params:
+      cache: false
+      build: diego-releases-git/components/diego-releases
+      load_base: cf-control-image
+    get_params:
+      skip_download: true
+
+- name: diego-manifests
+  serial: true
+  plan:
+  - aggregate:
+    - get: diego-releases-image
+      params:
+         save: true
+         skip_download: false
+      trigger: true
+      passed: [diego-releases]
+    - get: diego-manifests-git
+      trigger: true
+  - put: diego-manifests-image
+    params:
+      cache: false
+      build: diego-manifests-git/components/diego-manifests
+      load_base: diego-releases-image
+    get_params:
+      skip_download: true
+
+- name: api
+  serial: true
+  plan:
+  - aggregate:
+    - get: cf-control-image
+      trigger: true
+      passed: [cf-control]
+      params:
+         save: true
+         skip_download: false
+    - get: api-git
+      trigger: true
+  - put: api-image
+    params:
+      cache: false
+      build: api-git/components/api
+      load_base: cf-control-image
+    get_params:
+      skip_download: true
+
+- name: clock
+  serial: true
+  plan:
+  - aggregate:
+    - get: cf-control-image
+      trigger: true
+      passed: [cf-control]
+      params:
+         save: true
+         skip_download: false
+    - get: clock-git
+      trigger: true
+  - put: clock-image
+    params:
+      cache: false
+      build: clock-git/components/clock
+      load_base: cf-control-image
+    get_params:
+      skip_download: true
+
+- name: consul
+  serial: true
+  plan:
+  - aggregate:
+    - get: cf-control-image
+      trigger: true
+      passed: [cf-control]
+      params:
+         save: true
+         skip_download: false
+    - get: consul-git
+      trigger: true
+  - put: consul-image
+    params:
+      cache: true
+      build: consul-git/components/consul
+      load_base: cf-control-image
+    get_params:
+      skip_download: true
+
+- name: dea
+  serial: true
+  plan:
+  - aggregate:
+    - get: cf-control-image
+      trigger: true
+      passed: [cf-control]
+      params:
+         save: true
+         skip_download: false
+    - get: dea-git
+      trigger: true
+  - put: dea-image
+    params:
+      cache: false
+      build: dea-git/components/dea
+      load_base: cf-control-image
+    get_params:
+      skip_download: true
+
+- name: diego
+  serial: true
+  plan:
+  - aggregate:
+    - get: diego-manifests-image
+      trigger: true
+      passed: [diego-manifests]
+      params:
+         save: true
+         skip_download: false
+    - get: diego-git
+      trigger: true
+  - put: diego-image
+    params:
+      cache: false
+      build: diego-git/components/diego
+      load_base: diego-manifests-image
+    get_params:
+      skip_download: true
+
+- name: diego-cell
+  serial: true
+  plan:
+  - aggregate:
+    - get: diego-manifests-image
+      trigger: true
+      passed: [diego-manifests]
+      params:
+         save: true
+         skip_download: false
+    - get: diego-cell-git
+      trigger: true
+  - put: diego-cell-image
+    params:
+      cache: false
+      build: diego-cell-git/components/diego-cell
+      load_base: diego-manifests-image
+    get_params:
+      skip_download: true
+
+- name: etcd
+  serial: true
+  plan:
+  - aggregate:
+    - get: cf-control-image
+      trigger: true
+      passed: [cf-control]
+      params:
+         save: true
+    - get: etcd-git
+      trigger: true
+  - put: etcd-image
+    params:
+      cache: false
+      build: etcd-git/components/etcd
+      load_base: cf-control-image
+    get_params:
+      skip_download: true
+
+- name: ha-proxy
+  serial: true
+  plan:
+  - aggregate:
+    - get: cf-control-image
+      trigger: true
+      passed: [cf-control]
+      params:
+         save: true
+         skip_download: false
+    - get: ha-proxy-git
+      trigger: true
+  - put: ha-proxy-image
+    params:
+      cache: false
+      build: ha-proxy-git/components/ha-proxy
+      load_base: cf-control-image
+    get_params:
+      skip_download: true
+
+- name: hm9000
+  serial: true
+  plan:
+  - aggregate:
+    - get: cf-control-image
+      trigger: true
+      params:
+         save: true
+      passed: [cf-control]
+    - get: hm9000-git
+      trigger: true
+  - put: hm9000-image
+    params:
+      cache: false
+      build: hm9000-git/components/hm9000
+      load_base: cf-control-image
+    get_params:
+      skip_download: true
+
+- name: loggregator
+  serial: true
+  plan:
+  - aggregate:
+    - get: cf-control-image
+      trigger: true
+      passed: [cf-control]
+      params:
+         save: true
+         skip_download: false
+    - get: loggregator-git
+      trigger: true
+  - put: loggregator-image
+    params:
+      cache: false
+      build: loggregator-git/components/loggregator
+      load_base: cf-control-image
+    get_params:
+      skip_download: true
+
+- name: loggregator-trafficcontroller
+  serial: true
+  plan:
+  - aggregate:
+    - get: cf-control-image
+      trigger: true
+      passed: [cf-control]
+      params:
+         save: true
+         skip_download: false
+    - get: loggregator-trafficcontroller-git
+      trigger: true
+  - put: loggregator-trafficcontroller-image
+    params:
+      cache: false
+      build: loggregator-trafficcontroller-git/components/loggregator-trafficcontroller
+      load_base: cf-control-image
+    get_params:
+      skip_download: true
+
+- name: nats
+  serial: true
+  plan:
+  - aggregate:
+    - get: cf-control-image
+      trigger: true
+      passed: [cf-control]
+      params:
+         save: true
+         skip_download: false
+    - get: nats-git
+      trigger: true
+  - put: nats-image
+    params:
+      cache: false
+      build: nats-git/components/nats
+      load_base: cf-control-image
+    get_params:
+      skip_download: true
+
+- name: postgres
+  serial: true
+  plan:
+  - aggregate:
+    - get: cf-control-image
+      trigger: true
+      passed: [cf-control]
+      params:
+         save: true
+         skip_download: false
+    - get: postgres-git
+      trigger: true
+  - put: postgres-image
+    params:
+      cache: false
+      build: postgres-git/components/postgres
+      load_base: cf-control-image
+    get_params:
+      skip_download: true
+
+- name: router
+  serial: true
+  plan:
+  - aggregate:
+    - get: cf-control-image
+      trigger: true
+      passed: [cf-control]
+      params:
+         save: true
+         skip_download: false
+    - get: router-git
+      trigger: true
+  - put: router-image
+    params:
+      cache: false
+      build: router-git/components/router
+      load_base: cf-control-image
+    get_params:
+      skip_download: true
+
+- name: uaa
+  serial: true
+  plan:
+  - aggregate:
+    - get: cf-control-image
+      trigger: true
+      passed: [cf-control]
+      params:
+         save: true
+         skip_download: false
+    - get: uaa-git
+      trigger: true
+  - put: uaa-image
+    params:
+      cache: false
+      build: uaa-git/components/uaa
+      load_base: cf-control-image
+
+- name: deploy-dev-cloud-foundry
+  serial: true
+  plan:
+  - aggregate:
+    - get: concourse-scripts
+      trigger: true
+    - get: api-image
+      trigger: true
+      passed: [api]
+      params:
+        skip_download: true
+    - get: clock-image
+      trigger: true
+      passed: [clock]
+      params:
+        skip_download: true
+    - get: consul-image
+      trigger: true
+      passed: [consul]
+      params:
+        skip_download: true
+    - get: dea-image
+      trigger: true
+      passed: [dea]
+      params:
+        skip_download: true
+    - get: diego-image
+      trigger: true
+      passed: [diego]
+      params:
+        skip_download: true
+    - get: diego-cell-image
+      trigger: true
+      passed: [diego-cell]
+      params:
+        skip_download: true
+    - get: etcd-image
+      trigger: true
+      passed: [etcd]
+      params:
+        skip_download: true
+    - get: ha-proxy-image
+      trigger: true
+      passed: [ha-proxy]
+      params:
+        skip_download: true
+    - get: hm9000-image
+      trigger: true
+      passed: [hm9000]
+      params:
+        skip_download: true
+    - get: loggregator-image
+      trigger: true
+      passed: [loggregator]
+      params:
+        skip_download: true
+    - get: loggregator-trafficcontroller-image
+      trigger: true
+      passed: [loggregator-trafficcontroller]
+      params:
+        skip_download: true
+    - get: nats-image
+      trigger: true
+      passed: [nats]
+      params:
+        skip_download: true
+    - get: postgres-image
+      trigger: true
+      passed: [postgres]
+      params:
+        skip_download: true
+    - get: router-image
+      trigger: true
+      passed: [router]
+      params:
+        skip_download: true
+    - get: uaa-image
+      trigger: true
+      passed: [uaa]
+      params:
+        skip_download: true
+  - task: deploy
+    config:
+      platform: linux
+      image: "docker:///shippedrepos-docker-sitd.bintray.io/sitd/sitd-concourse-job"
+      inputs:
+      - name: concourse-scripts
+        path: .
+      run:
+        path: concourse/deploy_to_marathon
+      params:
+        ENV: dev
+        MARATHON: {{dev_marathon_url}}
+
+- name: run-dev-cats
+  serial: true
+  plan:
+  - aggregate:
+    - get: concourse-scripts
+      passed:
+      - deploy-dev-cloud-foundry
+      trigger: true
+    - get: api-image
+      passed:
+      - deploy-dev-cloud-foundry
+      trigger: true
+      params:
+        skip_download: true
+    - get: clock-image
+      passed:
+      - deploy-dev-cloud-foundry
+      trigger: true
+      params:
+        skip_download: true
+    - get: consul-image
+      passed:
+      - deploy-dev-cloud-foundry
+      trigger: true
+      params:
+        skip_download: true
+    - get: dea-image
+      passed:
+      - deploy-dev-cloud-foundry
+      trigger: true
+      params:
+        skip_download: true
+    - get: diego-image
+      passed:
+      - deploy-dev-cloud-foundry
+      trigger: true
+      params:
+        skip_download: true
+    - get: diego-cell-image
+      passed:
+      - deploy-dev-cloud-foundry
+      trigger: true
+      params:
+        skip_download: true
+    - get: etcd-image
+      passed:
+      - deploy-dev-cloud-foundry
+      trigger: true
+      params:
+        skip_download: true
+    - get: ha-proxy-image
+      passed:
+      - deploy-dev-cloud-foundry
+      trigger: true
+      params:
+        skip_download: true
+    - get: hm9000-image
+      passed:
+      - deploy-dev-cloud-foundry
+      trigger: true
+      params:
+        skip_download: true
+    - get: loggregator-image
+      passed:
+      - deploy-dev-cloud-foundry
+      trigger: true
+      params:
+        skip_download: true
+    - get: loggregator-trafficcontroller-image
+      passed:
+      - deploy-dev-cloud-foundry
+      trigger: true
+      params:
+        skip_download: true
+    - get: nats-image
+      passed:
+      - deploy-dev-cloud-foundry
+      trigger: true
+      params:
+        skip_download: true
+    - get: postgres-image
+      passed:
+      - deploy-dev-cloud-foundry
+      trigger: true
+      params:
+        skip_download: true
+    - get: router-image
+      passed:
+      - deploy-dev-cloud-foundry
+      trigger: true
+      params:
+        skip_download: true
+    - get: uaa-image
+      passed:
+      - deploy-dev-cloud-foundry
+      trigger: true
+      params:
+        skip_download: true
+  - task: run-cats
+    attempts: 3
+    config:
+      platform: linux
+      image: docker:///shippedrepos-docker-sitd.bintray.io/sitd/sitd-concourse-job
+      params:
+        CATS_ENV: dev
+      run:
+        path: concourse/run_cats
+      inputs:
+      - name: concourse-scripts
+        path: .
+
+- name: deploy-stable-cloud-foundry
+  serial: true
+  plan:
+  - aggregate:
+    - get: concourse-scripts
+      trigger: false
+      passed: [run-dev-cats]
+    - get: api-image
+      trigger: false
+      passed: [run-dev-cats]
+      params:
+        skip_download: true
+    - get: clock-image
+      trigger: false
+      passed: [run-dev-cats]
+      params:
+        skip_download: true
+    - get: consul-image
+      trigger: false
+      passed: [run-dev-cats]
+      params:
+        skip_download: true
+    - get: dea-image
+      trigger: false
+      passed: [run-dev-cats]
+      params:
+        skip_download: true
+    - get: diego-image
+      trigger: false
+      passed: [run-dev-cats]
+      params:
+        skip_download: true
+    - get: diego-cell-image
+      trigger: false
+      passed: [run-dev-cats]
+      params:
+        skip_download: true
+    - get: etcd-image
+      trigger: false
+      passed: [run-dev-cats]
+      params:
+        skip_download: true
+    - get: ha-proxy-image
+      trigger: false
+      passed: [run-dev-cats]
+      params:
+        skip_download: true
+    - get: hm9000-image
+      trigger: false
+      passed: [run-dev-cats]
+      params:
+        skip_download: true
+    - get: loggregator-image
+      trigger: false
+      passed: [run-dev-cats]
+      params:
+        skip_download: true
+    - get: loggregator-trafficcontroller-image
+      trigger: false
+      passed: [run-dev-cats]
+      params:
+        skip_download: true
+    - get: nats-image
+      trigger: false
+      passed: [run-dev-cats]
+      params:
+        skip_download: true
+    - get: postgres-image
+      trigger: false
+      passed: [run-dev-cats]
+      params:
+        skip_download: true
+    - get: router-image
+      trigger: false
+      passed: [run-dev-cats]
+      params:
+        skip_download: true
+    - get: uaa-image
+      trigger: false
+      passed: [run-dev-cats]
+      params:
+        skip_download: true
+  - task: deploy
+    config:
+      platform: linux
+      image: "docker:///shippedrepos-docker-sitd.bintray.io/sitd/sitd-concourse-job"
+      inputs:
+      - name: concourse-scripts
+        path: .
+      run:
+        path: concourse/deploy_to_marathon
+      params:
+        ENV: stable
+        MARATHON: {{stable_marathon_url}}
+
+- name: run-stable-cats
+  serial: true
+  plan:
+  - aggregate:
+    - get: concourse-scripts
+      passed:
+      - deploy-stable-cloud-foundry
+      trigger: true
+    - get: api-image
+      passed:
+      - deploy-stable-cloud-foundry
+      trigger: true
+      params:
+        skip_download: true
+    - get: clock-image
+      passed:
+      - deploy-stable-cloud-foundry
+      trigger: true
+      params:
+        skip_download: true
+    - get: consul-image
+      passed:
+      - deploy-stable-cloud-foundry
+      trigger: true
+      params:
+        skip_download: true
+    - get: dea-image
+      passed:
+      - deploy-stable-cloud-foundry
+      trigger: true
+      params:
+        skip_download: true
+    - get: diego-image
+      passed:
+      - deploy-stable-cloud-foundry
+      trigger: true
+      params:
+        skip_download: true
+    - get: diego-cell-image
+      passed:
+      - deploy-stable-cloud-foundry
+      trigger: true
+      params:
+        skip_download: true
+    - get: etcd-image
+      passed:
+      - deploy-stable-cloud-foundry
+      trigger: true
+      params:
+        skip_download: true
+    - get: ha-proxy-image
+      passed:
+      - deploy-stable-cloud-foundry
+      trigger: true
+      params:
+        skip_download: true
+    - get: hm9000-image
+      passed:
+      - deploy-stable-cloud-foundry
+      trigger: true
+      params:
+        skip_download: true
+    - get: loggregator-image
+      passed:
+      - deploy-stable-cloud-foundry
+      trigger: true
+      params:
+        skip_download: true
+    - get: loggregator-trafficcontroller-image
+      passed:
+      - deploy-stable-cloud-foundry
+      trigger: true
+      params:
+        skip_download: true
+    - get: nats-image
+      passed:
+      - deploy-stable-cloud-foundry
+      trigger: true
+      params:
+        skip_download: true
+    - get: postgres-image
+      passed:
+      - deploy-stable-cloud-foundry
+      trigger: true
+      params:
+        skip_download: true
+    - get: router-image
+      passed:
+      - deploy-stable-cloud-foundry
+      trigger: true
+      params:
+        skip_download: true
+    - get: uaa-image
+      passed:
+      - deploy-stable-cloud-foundry
+      trigger: true
+      params:
+        skip_download: true
+  - task: run-stable-cats
+    attempts: 10
+    config:
+      platform: linux
+      image: docker:///shippedrepos-docker-sitd.bintray.io/sitd/sitd-concourse-job
+      params:
+        CATS_ENV: stable
+      run:
+        path: concourse/run_cats
+      inputs:
+      - name: concourse-scripts
+        path: .
+
+resources:
+# GIT
+- name: sitd-concourse-job
+  type: git
+  source:
+    uri: git@github.com:CiscoCloud/containercf.git
+    # If Repo is Private private_key: {{sitd_github_private_key}}
+    paths:
+    - concourse/sitd-concourse-job
+
+- name: concourse-scripts
+  type: git
+  source:
+    uri: git@github.com:CiscoCloud/containercf.git
+    # If Repo is Private private_key: {{sitd_github_private_key}}
+    paths:
+    - apps/jobs
+    - apps/update_cf.sh
+    - apps/populate_kv_store.sh
+    - apps/dev_cf_parameters.sh
+    - apps/stable_cf_parameters.sh
+    - concourse/deploy_to_marathon
+    - concourse/restart_marathon_app
+    - concourse/run_cats
+
+- name: cf-base-git
+  type: git
+  source:
+    uri: git@github.com:CiscoCloud/containercf.git
+    # If Repo is Private private_key: {{sitd_github_private_key}}
+    paths:
+    - components/cf-base
+
+- name: cf-release-git
+  type: git
+  source:
+    uri: git@github.com:CiscoCloud/containercf.git
+    # If Repo is Private private_key: {{sitd_github_private_key}}
+    paths:
+    - components/cf-release
+
+- name: cf-manifest-git
+  type: git
+  source:
+    uri: git@github.com:CiscoCloud/containercf.git
+    # If Repo is Private private_key: {{sitd_github_private_key}}
+    paths:
+    - components/cf-manifest
+
+- name: cf-control-git
+  type: git
+  source:
+    uri: git@github.com:CiscoCloud/containercf.git
+    # If Repo is Private private_key: {{sitd_github_private_key}}
+    paths:
+    - components/cf-control
+
+- name: diego-releases-git
+  type: git
+  source:
+    uri: git@github.com:CiscoCloud/containercf.git
+    # If Repo is Private private_key: {{sitd_github_private_key}}
+    paths:
+    - components/diego-releases
+
+- name: diego-manifests-git
+  type: git
+  source:
+    uri: git@github.com:CiscoCloud/containercf.git
+    # If Repo is Private private_key: {{sitd_github_private_key}}
+    paths:
+    - components/diego-manifests
+
+- name: api-git
+  type: git
+  source:
+    uri: git@github.com:CiscoCloud/containercf.git
+    # If Repo is Private private_key: {{sitd_github_private_key}}
+    paths:
+    - components/api
+    - apps/jobs/api.json
+
+- name: clock-git
+  type: git
+  source:
+    uri: git@github.com:CiscoCloud/containercf.git
+    # If Repo is Private private_key: {{sitd_github_private_key}}
+    paths:
+    - components/clock
+    - apps/jobs/clock.json
+
+- name: consul-git
+  type: git
+  source:
+    uri: git@github.com:CiscoCloud/containercf.git
+    # If Repo is Private private_key: {{sitd_github_private_key}}
+    paths:
+    - components/consul
+    - apps/jobs/consul.json
+
+- name: dea-git
+  type: git
+  source:
+    uri: git@github.com:CiscoCloud/containercf.git
+    # If Repo is Private private_key: {{sitd_github_private_key}}
+    paths:
+    - components/dea
+    - apps/jobs/dea.json
+
+- name: diego-git
+  type: git
+  source:
+    uri: git@github.com:CiscoCloud/containercf.git
+    # If Repo is Private private_key: {{sitd_github_private_key}}
+    paths:
+    - components/diego
+    - apps/jobs/diego.json
+
+- name: diego-cell-git
+  type: git
+  source:
+    uri: git@github.com:CiscoCloud/containercf.git
+    # If Repo is Private private_key: {{sitd_github_private_key}}
+    paths:
+    - components/diego-cell
+    - apps/jobs/diego-cell.json
+
+- name: etcd-git
+  type: git
+  source:
+    uri: git@github.com:CiscoCloud/containercf.git
+    # If Repo is Private private_key: {{sitd_github_private_key}}
+    paths:
+    - components/etcd
+    - apps/jobs/etcd.json
+
+- name: ha-proxy-git
+  type: git
+  source:
+    uri: git@github.com:CiscoCloud/containercf.git
+    # If Repo is Private private_key: {{sitd_github_private_key}}
+    paths:
+    - components/ha-proxy
+    - apps/jobs/ha-proxy.json
+
+- name: hm9000-git
+  type: git
+  source:
+    uri: git@github.com:CiscoCloud/containercf.git
+    # If Repo is Private private_key: {{sitd_github_private_key}}
+    paths:
+    - components/hm9000
+    - apps/jobs/hm9000.json
+
+- name: loggregator-git
+  type: git
+  source:
+    uri: git@github.com:CiscoCloud/containercf.git
+    # If Repo is Private private_key: {{sitd_github_private_key}}
+    paths:
+    - components/loggregator
+    - apps/jobs/loggregator.json
+
+- name: loggregator-trafficcontroller-git
+  type: git
+  source:
+    uri: git@github.com:CiscoCloud/containercf.git
+    # If Repo is Private private_key: {{sitd_github_private_key}}
+    paths:
+    - components/loggregator-trafficcontroller
+    - apps/jobs/loggregator-trafficcontroller.json
+
+- name: nats-git
+  type: git
+  source:
+    uri: git@github.com:CiscoCloud/containercf.git
+    # If Repo is Private private_key: {{sitd_github_private_key}}
+    paths:
+    - components/nats
+    - apps/jobs/nats.json
+
+- name: postgres-git
+  type: git
+  source:
+    uri: git@github.com:CiscoCloud/containercf.git
+    # If Repo is Private private_key: {{sitd_github_private_key}}
+    paths:
+    - components/postgres
+    - apps/jobs/postgres.json
+
+- name: router-git
+  type: git
+  source:
+    uri: git@github.com:CiscoCloud/containercf.git
+    # If Repo is Private private_key: {{sitd_github_private_key}}
+    paths:
+    - components/router
+    - apps/jobs/router.json
+
+- name: uaa-git
+  type: git
+  source:
+    uri: git@github.com:CiscoCloud/containercf.git
+    # If Repo is Private private_key: {{sitd_github_private_key}}
+    paths:
+    - components/uaa
+    - apps/jobs/uaa.json
+
+# DOCKER
+- name: sitd-concourse-job-image
+  type: docker-image
+  source:
+    repository: shippedrepos-docker-sitd.bintray.io/sitd/sitd-concourse-job
+    email: {{sitd_docker_repo_email}}
+    username: {{sitd_docker_repo_username}}
+    password: {{sitd_docker_repo_password}}
+
+- name: cf-base-image
+  type: docker-image
+  source:
+    repository: shippedrepos-docker-sitd.bintray.io/sitd/cf-base
+    email: {{sitd_docker_repo_email}}
+    username: {{sitd_docker_repo_username}}
+    password: {{sitd_docker_repo_password}}
+
+- name: cf-release-image
+  type: docker-image
+  source:
+    repository: shippedrepos-docker-sitd.bintray.io/sitd/cf-release
+    email: {{sitd_docker_repo_email}}
+    username: {{sitd_docker_repo_username}}
+    password: {{sitd_docker_repo_password}}
+
+- name: cf-manifest-image
+  type: docker-image
+  source:
+    repository: shippedrepos-docker-sitd.bintray.io/sitd/cf-manifest
+    email: {{sitd_docker_repo_email}}
+    username: {{sitd_docker_repo_username}}
+    password: {{sitd_docker_repo_password}}
+
+- name: cf-control-image
+  type: docker-image
+  source:
+    repository: shippedrepos-docker-sitd.bintray.io/sitd/cf-control
+    email: {{sitd_docker_repo_email}}
+    username: {{sitd_docker_repo_username}}
+    password: {{sitd_docker_repo_password}}
+
+- name: diego-releases-image
+  type: docker-image
+  source:
+    repository: shippedrepos-docker-sitd.bintray.io/sitd/diego-releases
+    email: {{sitd_docker_repo_email}}
+    username: {{sitd_docker_repo_username}}
+    password: {{sitd_docker_repo_password}}
+
+- name: diego-manifests-image
+  type: docker-image
+  source:
+    repository: shippedrepos-docker-sitd.bintray.io/sitd/diego-manifests
+    email: {{sitd_docker_repo_email}}
+    username: {{sitd_docker_repo_username}}
+    password: {{sitd_docker_repo_password}}
+
+- name: api-image
+  type: docker-image
+  source:
+    repository: shippedrepos-docker-sitd.bintray.io/sitd/api
+    email: {{sitd_docker_repo_email}}
+    username: {{sitd_docker_repo_username}}
+    password: {{sitd_docker_repo_password}}
+
+- name: clock-image
+  type: docker-image
+  source:
+    repository: shippedrepos-docker-sitd.bintray.io/sitd/clock
+    email: {{sitd_docker_repo_email}}
+    username: {{sitd_docker_repo_username}}
+    password: {{sitd_docker_repo_password}}
+
+- name: consul-image
+  type: docker-image
+  source:
+    repository: shippedrepos-docker-sitd.bintray.io/sitd/consul
+    email: {{sitd_docker_repo_email}}
+    username: {{sitd_docker_repo_username}}
+    password: {{sitd_docker_repo_password}}
+
+- name: dea-image
+  type: docker-image
+  source:
+    repository: shippedrepos-docker-sitd.bintray.io/sitd/dea
+    email: {{sitd_docker_repo_email}}
+    username: {{sitd_docker_repo_username}}
+    password: {{sitd_docker_repo_password}}
+
+- name: diego-image
+  type: docker-image
+  source:
+    repository: shippedrepos-docker-sitd.bintray.io/sitd/diego
+    email: {{sitd_docker_repo_email}}
+    username: {{sitd_docker_repo_username}}
+    password: {{sitd_docker_repo_password}}
+
+- name: diego-cell-image
+  type: docker-image
+  source:
+    repository: shippedrepos-docker-sitd.bintray.io/sitd/diego-cell
+    email: {{sitd_docker_repo_email}}
+    username: {{sitd_docker_repo_username}}
+    password: {{sitd_docker_repo_password}}
+
+- name: etcd-image
+  type: docker-image
+  source:
+    repository: shippedrepos-docker-sitd.bintray.io/sitd/etcd
+    email: {{sitd_docker_repo_email}}
+    username: {{sitd_docker_repo_username}}
+    password: {{sitd_docker_repo_password}}
+
+- name: ha-proxy-image
+  type: docker-image
+  source:
+    repository: shippedrepos-docker-sitd.bintray.io/sitd/ha-proxy
+    email: {{sitd_docker_repo_email}}
+    username: {{sitd_docker_repo_username}}
+    password: {{sitd_docker_repo_password}}
+
+- name: hm9000-image
+  type: docker-image
+  source:
+    repository: shippedrepos-docker-sitd.bintray.io/sitd/hm9000
+    email: {{sitd_docker_repo_email}}
+    username: {{sitd_docker_repo_username}}
+    password: {{sitd_docker_repo_password}}
+
+- name: loggregator-image
+  type: docker-image
+  source:
+    repository: shippedrepos-docker-sitd.bintray.io/sitd/loggregator
+    email: {{sitd_docker_repo_email}}
+    username: {{sitd_docker_repo_username}}
+    password: {{sitd_docker_repo_password}}
+
+- name: loggregator-trafficcontroller-image
+  type: docker-image
+  source:
+    repository: shippedrepos-docker-sitd.bintray.io/sitd/loggregator-trafficcontroller
+    email: {{sitd_docker_repo_email}}
+    username: {{sitd_docker_repo_username}}
+    password: {{sitd_docker_repo_password}}
+
+- name: nats-image
+  type: docker-image
+  source:
+    repository: shippedrepos-docker-sitd.bintray.io/sitd/nats
+    email: {{sitd_docker_repo_email}}
+    username: {{sitd_docker_repo_username}}
+    password: {{sitd_docker_repo_password}}
+
+- name: postgres-image
+  type: docker-image
+  source:
+    repository: shippedrepos-docker-sitd.bintray.io/sitd/postgres
+    email: {{sitd_docker_repo_email}}
+    username: {{sitd_docker_repo_username}}
+    password: {{sitd_docker_repo_password}}
+
+- name: router-image
+  type: docker-image
+  source:
+    repository: shippedrepos-docker-sitd.bintray.io/sitd/router
+    email: {{sitd_docker_repo_email}}
+    username: {{sitd_docker_repo_username}}
+    password: {{sitd_docker_repo_password}}
+
+- name: uaa-image
+  type: docker-image
+  source:
+    repository: shippedrepos-docker-sitd.bintray.io/sitd/uaa
+    email: {{sitd_docker_repo_email}}
+    username: {{sitd_docker_repo_username}}
+    password: {{sitd_docker_repo_password}}

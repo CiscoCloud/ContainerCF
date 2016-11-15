@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+env=$1
+
+source ./environments/${env}/cf_parameters
+
+http delete http://${HOST_IP}:8080/v2/groups/cf?force=true
+

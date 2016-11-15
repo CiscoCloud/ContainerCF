@@ -1,0 +1,3 @@
+#!/bin/sh
+
+fly -t sitd login --concourse-url http://CHANGEME_CONCOURSE_IP:8080/

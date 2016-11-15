@@ -1,0 +1,17 @@
+#!/bin/sh
+
+set -e
+
+./scripts/populate_kv_store ${ENV}
+./scripts/update_cf ${ENV}
+
+echo "Checking to see if CF already exists on Marathon..."
+
+if http --check-status ${MARATHON}/v2/groups/cf; then
+	echo "CF already exists - deleting with extreme force..."
+  http delete ${MARATHON}/v2/groups/cf?force=true
+  sleep 60
+fi
+
+echo "Deploying Cloud Foundry..."
+http --check-status POST ${MARATHON}/v2/groups < environments/${ENV}/${ENV}-cf.json

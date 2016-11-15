@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+env=$1
+source environments/${env}/cf_parameters
+
+for key in "${!kv_array[@]}"
+do
+  value=${kv_array[$key]}
+  curl -X PUT -d "$value" http://${HOST_IP}:8500/v1/kv${key}
+done

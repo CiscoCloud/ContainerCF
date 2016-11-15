@@ -1,0 +1,6 @@
+#!/bin/bash
+
+env=$1
+source ./environments/${env}/cf_parameters
+etcdctl --peers http://${HOST_IP}:4001,http://${HOST_IP}:2379 set /coreos.com/network/config < ./environments/${env}/flannel_etcd_keys
+etcdctl --peers http://${HOST_IP}:4001,http://${HOST_IP}:2379 get /coreos.com/network/config

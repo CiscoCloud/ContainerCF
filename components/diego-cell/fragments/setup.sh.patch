@@ -1,0 +1,5 @@
+47a48,51
+>   mount -t cgroup -o net_cls,net_prio cgroup ${1}/net_prio
+>   mount -t cgroup -o net_cls,net_prio cgroup ${1}/net_cls
+>   mount -t cgroup -o cpu,cpuacct cgroup ${1}/cpu
+>   mount -t cgroup -o cpu,cpuacct cgroup ${1}/cpuacct

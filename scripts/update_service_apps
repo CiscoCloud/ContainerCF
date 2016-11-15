@@ -1,0 +1,11 @@
+#!/bin/bash
+
+env=$1
+output_file=./environments/${env}/${env}-services.json
+
+source ./environments/${env}/cf_parameters
+
+jq '{id: "services", groups: [{id: "/services/jobs", apps: .}]}' --slurp ./apps/services/*.json > ${output_file}
+sed -i "s/\"MESOS_SLAVE_COUNT_PLACEHOLDER\"/$MESOS_SLAVE_COUNT/g" ${output_file}
+sed -i "s/HOST_IP_PLACEHOLDER/$HOST_IP/g" ${output_file}
+sed -i "s/HOST_URL_PLACEHOLDER/$HOST_URL/g" ${output_file}

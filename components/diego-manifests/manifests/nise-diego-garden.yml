@@ -1,0 +1,21 @@
+name: cf-diego
+jobs:
+- name: garden
+  templates:
+  - name: garden
+
+properties:
+  garden:
+    allow_host_access: null
+    allow_networks: null
+    deny_networks:
+    - 0.0.0.0/0
+    disk_quota_enabled: false
+    enable_graph_cleanup: true
+    insecure_docker_registry_list: null
+    listen_address: 0.0.0.0:7777
+    listen_network: tcp
+    mount_btrfs_loopback: false
+    network_mtu: null
+    persistent_image_list:
+    - /var/vcap/packages/rootfs_cflinuxfs2/rootfs

@@ -1,0 +1,13 @@
+7a8
+>         "regexp"
+50,53c51,55
+< 		if strings.Contains(line, fmt.Sprintf("%s:", subsystem)) {
+< 			return line
+< 		}
+< 	}
+---
+>                 match, _ := regexp.MatchString(fmt.Sprintf("%s[,:]", subsystem), line)
+>                 if match {
+>                         return line
+>                 }
+>         }
