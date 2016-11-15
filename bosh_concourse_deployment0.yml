@@ -1,0 +1,144 @@
+---
+name: concourse
+director_uuid: YOUR_DIRECTOR
+atc_db_name: atc
+atc_db_role: &1
+  name: atc
+  password: YOUR_PASSWORD
+networks:
+- name: private
+  type: manual
+  subnets:
+  - range: 172.31.16.0/20
+    reserved:
+    - 172.31.16.2
+    - 172.31.16.3
+    - 172.31.16.6
+    - 172.31.19.93
+    - 172.31.16.250
+    static:
+    - 172.31.16.4
+    dns:
+    - 172.31.0.2
+    gateway: 172.31.16.1
+    cloud_properties:
+      security_groups:
+      - concourse
+      subnet: subnet-your-subnet-id
+resource_pools:
+- name: concourse
+  network: private
+  stemcell:
+    name: bosh-aws-xen-hvm-ubuntu-trusty-go_agent
+    version: 3156
+  cloud_properties:
+    instance_type: m4.large
+    ephemeral_disk:
+      size: 30000
+      type: gp2
+  env:
+    bosh:
+      password: "Your password in $6$ linux format"
+- name: concourse-worker
+  network: private
+  stemcell:
+    name: bosh-aws-xen-hvm-ubuntu-trusty-go_agent
+    version: 3156
+  cloud_properties:
+    instance_type: m4.xlarge
+    ephemeral_disk:
+      size: 1200000
+      type: gp2
+  env:
+    bosh:
+      password: "Your password in $6$ linux format"
+compilation:
+  workers: 3
+  network: private
+  reuse_compilation_vms: true
+  cloud_properties:
+    instance_type: c3.large
+    ephemeral_disk:
+      size: 30000
+      type: gp2
+releases:
+- name: concourse
+  version: 0.70.0
+- name: garden-linux
+  version: 0.329.0
+jobs:
+- name: concourse
+  instances: 1
+  resource_pool: concourse
+  persistent_disk: 30000
+  templates:
+  - release: concourse
+    name: consul-agent
+  - release: concourse
+    name: tsa
+  - release: concourse
+    name: atc
+  - release: concourse
+    name: postgresql
+  networks:
+  - name: private
+    static_ips: 172.31.16.4
+  properties:
+    atc:
+      basic_auth_username: admin
+      basic_auth_password: admin
+      postgresql:
+        database: atc
+        role: *1
+    consul:
+      agent:
+        mode: server
+        servers:
+          lan:
+          - 172.31.16.4
+    garden:
+      listen_network: tcp
+      listen_address: 0.0.0.0:7777
+    postgresql:
+      databases:
+      - name: atc
+      roles:
+      - *1
+    tsa:
+      atc:
+        username: admin
+        password: admin
+- name: concourse-worker
+  instances: 3
+  resource_pool: concourse-worker
+  persistent_disk: 30000
+  templates:
+  - release: concourse
+    name: consul-agent
+  - release: concourse
+    name: groundcrew
+  - release: concourse
+    name: baggageclaim
+  - release: garden-linux
+    name: garden
+  networks:
+  - name: private
+  properties:
+    consul:
+      agent:
+        servers:
+          lan:
+          - 172.31.16.4
+    garden:
+      listen_network: tcp
+      listen_address: 0.0.0.0:7777
+    groundcrew:
+      additional_resource_types:
+      - type: docker-image
+        image: docker:///concourse/docker-image-resource
+update:
+  canaries: 1
+  max_in_flight: 1
+  serial: false
+  canary_watch_time: 1000-60000
+  update_watch_time: 1000-60000
